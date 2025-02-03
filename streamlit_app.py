@@ -4,6 +4,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
+
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
@@ -43,17 +47,18 @@ def setup_page():
 
 def setup_selenium():
     chrome_options = Options()
-    chrome_options.add_argument("--headless")  # Run in headless mode
+    chrome_options.add_argument("--headless")
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
     
     try:
-        driver = webdriver.Chrome(options=chrome_options)
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
     except Exception as e:
         st.error(f"Error setting up Chrome driver: {str(e)}")
         return None
-
+        
 def fetch_data(driver, url):
     try:
         driver.get(url)
