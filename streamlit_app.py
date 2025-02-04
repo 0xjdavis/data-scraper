@@ -8,9 +8,16 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 
+from playwright.sync_api import sync_playwright
+
 from bs4 import BeautifulSoup
 import pandas as pd
 import time
+
+
+
+
+
 
 def setup_page():
     st.set_page_config(
@@ -44,9 +51,22 @@ def setup_page():
 
     
     return st.empty()
-
-from playwright.sync_api import sync_playwright
-
+    
+def setup_selenium():
+    chrome_options = Options()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
+    chrome_options.binary_location = "/usr/bin/chromium-browser"
+    
+    try:
+        service = Service(ChromeDriverManager().install())
+        driver = webdriver.Chrome(service=service, options=chrome_options)
+        return driver
+    except Exception as e:
+        st.error(f"Error setting up Chrome driver: {str(e)}")
+        return None
+        
 def setup_browser():
     try:
         playwright = sync_playwright().start()
@@ -65,23 +85,8 @@ def fetch_data(page, url):
     except Exception as e:
         st.error(f"Error fetching data: {str(e)}")
         return None
-        
-def fetch_data(driver, url):
-    try:
-        driver.get(url)
-        
-        # Wait for the race data table to load (max 10 seconds)
-        WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "compact-styled-table"))
-        )
-        
-        # Give a short pause to ensure all dynamic content is loaded
-        time.sleep(2)
-        
-        return driver.page_source
-    except Exception as e:
-        st.error(f"Error fetching data: {str(e)}")
-        return None
+
+
 
 def parse_race_data(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
