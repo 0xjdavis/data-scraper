@@ -45,19 +45,25 @@ def setup_page():
     
     return st.empty()
 
-def setup_selenium():
-    chrome_options = Options()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.binary_location = "/usr/bin/chromium-browser"
-    
+from playwright.sync_api import sync_playwright
+
+def setup_browser():
     try:
-        service = Service(ChromeDriverManager(path="/usr/bin").install())
-        driver = webdriver.Chrome(service=service, options=chrome_options)
-        return driver
+        playwright = sync_playwright().start()
+        browser = playwright.chromium.launch(headless=True)
+        page = browser.new_page()
+        return playwright, browser, page
     except Exception as e:
-        st.error(f"Error setting up Chrome driver: {str(e)}")
+        st.error(f"Error setting up browser: {str(e)}")
+        return None, None, None
+
+def fetch_data(page, url):
+    try:
+        page.goto(url)
+        page.wait_for_selector('.compact-styled-table', timeout=10000)
+        return page.content()
+    except Exception as e:
+        st.error(f"Error fetching data: {str(e)}")
         return None
         
 def fetch_data(driver, url):
